@@ -1,0 +1,5 @@
+{
+  "main": "../dist/typeorm/index.js",
+  "types": "../dist/typeorm/index.d.ts",
+  "sideEffects": false
+}

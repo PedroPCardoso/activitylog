@@ -1,0 +1,54 @@
+# All dev tasks run inside Docker. Usage:
+#   docker compose run --rm dev npm ci
+#   docker compose run --rm dev npm test
+#
+# Multi-dialect tests will be gated by PG_HOST/MYSQL_HOST when the stores land.
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      - CI=true
+      - PG_HOST=${PG_HOST:-}
+      - PG_PORT=5432
+      - PG_USER=activitylog
+      - PG_PASSWORD=activitylog
+      - PG_DATABASE=activitylog
+      - MYSQL_HOST=${MYSQL_HOST:-}
+      - MYSQL_PORT=3306
+      - MYSQL_USER=activitylog
+      - MYSQL_PASSWORD=activitylog
+      - MYSQL_DATABASE=activitylog
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=activitylog
+      - POSTGRES_PASSWORD=activitylog
+      - POSTGRES_DB=activitylog
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U activitylog']
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=activitylog
+      - MYSQL_PASSWORD=activitylog
+      - MYSQL_DATABASE=activitylog
+    healthcheck:
+      test: ['CMD-SHELL', 'mysql -h 127.0.0.1 -uroot -proot -e "SELECT 1" >/dev/null 2>&1']
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+volumes:
+  node_modules:

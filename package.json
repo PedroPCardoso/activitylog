@@ -1,1 +1,39 @@
-{}
+{
+  "name": "activitylog-monorepo",
+  "private": true,
+  "description": "Monorepo for activitylog-core, activitylog-nestjs and activitylog-nextjs.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/core",
+    "packages/activitylog-nestjs",
+    "packages/activitylog-nextjs"
+  ],
+  "scripts": {
+    "build": "npm run build -w activitylog-core && npm run build -w activitylog-nestjs && npm run build -w activitylog-nextjs && node scripts/verify-core-singleton.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint \"packages/*/src/**/*.ts\" \"test/**/*.ts\"",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2",
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@nestjs/testing": "^11.1.28",
+    "@prisma/client": "*",
+    "@types/node": "^20",
+    "@typescript-eslint/eslint-plugin": "^7",
+    "@typescript-eslint/parser": "^7",
+    "drizzle-orm": "*",
+    "eslint": "^8",
+    "reflect-metadata": "^0.2",
+    "tsup": "^8",
+    "typeorm": "^0.3",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  }
+}

@@ -49,7 +49,8 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 
 Branches menores que não foram cravados nesta sessão — resolver antes das fases correspondentes:
 
-- **Profundidade da tipagem da Query API** (fase 4): scopes sobre colunas fixas são tipados; filtrar *dentro* de `properties` (JSON dinâmico) é tipável ou fica como filtro string livre?
-- **`created_at` / timezone**: gravar sempre em UTC? Ordenação cronológica sob concorrência usa `created_at` + `id` como tiebreak?
+- **Profundidade da tipagem da Query API** (fase 4): decidido em D18.
+- **`created_at` / timezone**: decidido em D19.
 - **`dontSubmitEmptyLogs` × iff**: diff vazio dentro de uma tx → simplesmente não emite `persist` (nenhuma linha), confirmado como no-op seguro.
+- **`LogOptions`**: decidido em D20.
 - **Interop nestjs-cls**: escrever a receita concreta (copiar `user` da CLS para o causer no middleware).
