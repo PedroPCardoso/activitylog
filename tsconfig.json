@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "activitylog-core": ["packages/core/src/index.ts"],
+      "activitylog-core/*": ["packages/core/src/*"],
+      "activitylog-nestjs": ["packages/activitylog-nestjs/src/index.ts"],
+      "activitylog-nestjs/typeorm": ["packages/activitylog-nestjs/src/typeorm/index.ts"],
+      "activitylog-nextjs": ["packages/activitylog-nextjs/src/index.ts"],
+      "activitylog-nextjs/prisma": ["packages/activitylog-nextjs/src/prisma/index.ts"],
+      "activitylog-nextjs/drizzle": ["packages/activitylog-nextjs/src/drizzle/index.ts"],
+      "@core/*": ["packages/core/src/*"]
+    }
+  },
+  "include": ["packages/*/src", "test"],
+  "exclude": ["node_modules", "**/dist"]
+}

@@ -1,0 +1,67 @@
+{
+  "name": "activitylog-nestjs",
+  "version": "0.0.0",
+  "description": "NestJS activity log module with TypeORM adapter support.",
+  "keywords": [
+    "nestjs",
+    "typeorm",
+    "activitylog",
+    "audit",
+    "audit-log"
+  ],
+  "author": "Pedro Cardoso",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PedroPCardoso/activitylog.git",
+    "directory": "packages/activitylog-nestjs"
+  },
+  "homepage": "https://github.com/PedroPCardoso/activitylog#readme",
+  "bugs": {
+    "url": "https://github.com/PedroPCardoso/activitylog/issues"
+  },
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./typeorm": {
+      "require": "./dist/typeorm/index.js",
+      "types": "./dist/typeorm/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "typeorm"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "activitylog-core": "^0.0.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10 || ^11",
+    "typeorm": "^0.3"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "typeorm": {
+      "optional": true
+    }
+  }
+}
