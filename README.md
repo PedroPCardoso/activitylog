@@ -162,6 +162,7 @@ the SQL and ORM schema references.
 - [`docs/TYPEORM.md`](docs/TYPEORM.md) — TypeORM decorator, subscriber and transaction behavior
 - [`DIVERGENCES.md`](DIVERGENCES.md) — deliberate differences from Spatie and adapter limitations
 - [`docs/RELEASING.md`](docs/RELEASING.md) — Changesets, npm provenance and release prerequisites
+- [`docs/PRISMA.md`](docs/PRISMA.md) — Prisma dialect, transaction, bulk and nested-write contract
 
 ## License
 
