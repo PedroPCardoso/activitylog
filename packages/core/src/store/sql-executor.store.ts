@@ -52,7 +52,7 @@ export class SqlExecutorStore implements ActivityStore {
 
   async prune(olderThan: Date, logName?: string): Promise<number> {
     const dialect = dialectFor(this.options.dataSource.dialect);
-    const params: unknown[] = [olderThan.toISOString()];
+    const params: unknown[] = [timestampValue(olderThan, this.options.dataSource.dialect)];
     const clauses = [`${quote(dialect, 'created_at')} < ${dialect.placeholder(params.length)}`];
 
     if (logName !== undefined) {
@@ -70,7 +70,7 @@ export class SqlExecutorStore implements ActivityStore {
   private insertStatement(activity: NewActivity): { sql: string; params: readonly unknown[] } {
     const dialect = dialectFor(this.options.dataSource.dialect);
     const columns = activity.id === undefined ? COLUMNS.slice(1) : COLUMNS;
-    const params = columns.map((column) => activityValue(activity, column));
+    const params = columns.map((column) => activityValue(activity, column, this.options.dataSource.dialect));
     const placeholders = columns.map((_, index) => dialect.placeholder(index + 1));
 
     return {
@@ -146,7 +146,11 @@ function quote(dialect: ReturnType<typeof dialectFor>, identifier: string): stri
   return dialect.escapeIdentifier(identifier);
 }
 
-function activityValue(activity: NewActivity, column: (typeof COLUMNS)[number]): unknown {
+function activityValue(
+  activity: NewActivity,
+  column: (typeof COLUMNS)[number],
+  dialect: SqlDataSource['dialect'],
+): unknown {
   switch (column) {
     case 'id':
       return activity.id;
@@ -169,8 +173,13 @@ function activityValue(activity: NewActivity, column: (typeof COLUMNS)[number]):
     case 'batch_uuid':
       return activity.batchUuid;
     case 'created_at':
-      return activity.createdAt.toISOString();
+      return timestampValue(activity.createdAt, dialect);
   }
+}
+
+function timestampValue(value: Date, dialect: SqlDataSource['dialect']): string {
+  const iso = value.toISOString();
+  return dialect === 'mysql' ? `${iso.slice(0, -1).replace('T', ' ')}` : iso;
 }
 
 function affectedRows(rows: readonly SqlRow[]): number {

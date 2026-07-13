@@ -46,3 +46,4 @@ export { ActivityLogger, ActivityLogBuilder, createActivityLogger } from './logg
 export type { ActivityLoggerOptions, ActivityTap } from './logger/activity-logger';
 export { SqlExecutorStore } from './store/sql-executor.store';
 export type { SqlExecutorStoreOptions } from './store/sql-executor.store';
+export { ACTIVITY_LOG_MIGRATIONS } from './migrations/activity-log.migrations';
