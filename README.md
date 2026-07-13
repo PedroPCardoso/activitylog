@@ -124,6 +124,11 @@ override them through `activity(logName, options)`; the precedence is call > fea
 default. `ActivityLogInterceptor` is exported as a secondary integration for applications that
 cannot use middleware. Use either HTTP integration as the context boundary.
 
+Applications that already keep their authenticated user in `nestjs-cls` can use it as the single
+identity source without adding a runtime dependency to activitylog. See
+[`docs/NESTJS_CLS.md`](docs/NESTJS_CLS.md) for the lazy resolver recipe, middleware ordering and
+queue-boundary caveat.
+
 ## Querying activities
 
 `activityQuery(store)` provides immutable typed scopes for log, subject, causer, event, batch,
