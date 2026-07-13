@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: docker compose run --rm dev npm run build
 
+      - name: NestJS consumer smoke
+        run: docker compose run --rm dev npm run smoke:nestjs
+
       - name: Stop databases
         if: always()
         run: docker compose down -v

@@ -27,8 +27,9 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 ### `#17 — Smoke consumer NestJS + release 0.1`
 
 O adapter TypeORM e sua matriz de cobertura foram concluídos em `#15`/`#16`.
-A próxima entrega empacota `activitylog-core` e `activitylog-nestjs`, instala os
-tarballs em um consumer NestJS real e prepara/publica o marco 0.1.
+Os tarballs já são instalados e exercitados por um consumer NestJS isolado. A
+publicação 0.1 está preparada via Changesets e aguarda autenticação/configuração
+externa do npm e do GitHub para concluir `#17`.
 
 ---
 
