@@ -24,12 +24,12 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 
 ## 🎯 Issue próxima a executar
 
-### `#17 — Smoke consumer NestJS + release 0.1`
+### `#18 — Adapter Prisma: $extends + auditedTransaction`
 
-O adapter TypeORM e sua matriz de cobertura foram concluídos em `#15`/`#16`.
-Os tarballs já são instalados e exercitados por um consumer NestJS isolado. A
-publicação 0.1 está preparada via Changesets e aguarda autenticação/configuração
-externa do npm e do GitHub para concluir `#17`.
+O contrato de dialeto explícito, transação, bulk e nested writes foi congelado
+em `#7` e [`PRISMA.md`](./PRISMA.md). A implementação da #18 pode prosseguir
+enquanto a publicação 0.1 permanece preparada no PR de versão #30, aguardando
+somente a credencial npm para concluir `#17`.
 
 ---
 
