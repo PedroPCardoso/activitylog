@@ -1,5 +1,6 @@
 import { InvalidActivityDateException } from '../exceptions/invalid-activity-date.exception';
 import { getActivityLogContext } from '../context/activitylog-context';
+import { isActivityLoggingEnabled } from '../context/activitylog-context.helpers';
 import { resolveLogOptions } from '../options/resolve-log-options';
 import { redactActivity } from '../redaction/redact-activity';
 import { createActivityTimestamp } from '../types/time.types';
@@ -27,7 +28,7 @@ export type ActivityTap = (activity: NewActivity) => void | NewActivity;
 interface ActivityBuilderState {
   logName: string;
   subject: SubjectRef | null;
-  causer: CauserRef | null;
+  causer?: CauserRef | null;
   properties: ActivityProperties;
   event: ActivityEvent | null;
   createdAt?: Date;
@@ -53,7 +54,6 @@ export class ActivityLogger {
     return new ActivityLogBuilder(this.options.store, this.now, this.logOptions, {
       logName,
       subject: null,
-      causer: null,
       properties: {},
       event: null,
       taps: [],
@@ -112,11 +112,16 @@ export class ActivityLogBuilder {
 
   async log(description: string): Promise<void> {
     const context = getActivityLogContext();
+    if (!isActivityLoggingEnabled() || context?.withoutLogging === true) {
+      return;
+    }
+
+    const causer = this.state.causer === undefined ? context?.causer ?? null : this.state.causer;
     let activity: NewActivity = {
       logName: this.state.logName,
       description,
       subject: this.state.subject === null ? null : copyRef(this.state.subject),
-      causer: this.state.causer === null ? null : copyRef(this.state.causer),
+      causer: causer === null ? null : copyRef(causer),
       properties: { ...this.state.properties },
       event: this.state.event,
       batchUuid: context?.batchUuid ?? null,
