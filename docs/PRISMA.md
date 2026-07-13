@@ -1,7 +1,38 @@
 # Prisma adapter decisions
 
-This document freezes the dialect, transaction, bulk and nested-write contract for the Prisma
-adapter before implementation. It is the implementation brief for issue #18.
+This document defines the implemented dialect, transaction, bulk and nested-write contract for the
+Prisma adapter.
+
+## Usage
+
+The convenience client is best-effort:
+
+```ts
+import { prismaActivityLog } from 'activitylog-nextjs/prisma';
+
+const options = {
+  dialect: 'sqlite' as const,
+  models: {
+    User: { idField: 'id', relationFields: ['posts'] },
+  },
+};
+
+const activityPrisma = prismaActivityLog(prisma, options);
+await activityPrisma.user.update({ where: { id: 1 }, data: { name: 'Updated' } });
+```
+
+Use the explicit helper for iff-committed work:
+
+```ts
+import { auditedTransaction } from 'activitylog-nextjs/prisma';
+
+await auditedTransaction(prisma, options, async (tx) => {
+  await tx.user.update({ where: { id: 1 }, data: { name: 'Atomic' } });
+});
+```
+
+The helper owns one interactive transaction. If the callback, diff pipeline, redaction hook or
+Activity store fails, Prisma rolls back both the model mutation and Activity insert.
 
 ## Store and dialect
 
@@ -13,12 +44,14 @@ discovering the configured provider, so adapter options use an explicit union:
 type PrismaModelConfig = {
   idField?: string;                    // defaults to "id"
   relationFields?: readonly string[];  // defaults to []
+  auditFields?: readonly string[];     // re-include globally omitted fields in private reads
 };
 
 type PrismaModelMap = Record<string, PrismaModelConfig>;
 
 type PrismaActivityLogOptions = {
   models?: PrismaModelMap;
+  lockForDiff?: false;
 } & (
   | {
       dialect: 'sqlite' | 'postgres' | 'mysql';
@@ -40,6 +73,11 @@ reported to a query extension (for example, `User`, not the `user` delegate prop
 preserve the store/dialect either/or rule. Only single-field identities are supported in 0.2.
 Missing or unsupported dialects and invalid model configuration fail during adapter creation,
 before a mutation runs. The adapter does not inspect generated-client internals or DMMF.
+The supported peer range is Prisma Client `>=7.8.0 <8`; the integration suite runs against the
+minimum supported version. Prisma cannot express a portable row lock through `findUnique`, so this
+adapter rejects `lockForDiff: true` instead of silently promising a lock. Use
+`auditedTransaction` plus the database's transaction-isolation configuration when stronger
+concurrency semantics are required.
 
 For the built-in SQL store, a Prisma executor sends reads through `$queryRawUnsafe(sql, ...params)`
 and mutations through `$executeRawUnsafe(sql, ...params)`. "Unsafe" refers to the API accepting a
@@ -81,15 +119,22 @@ Top-level scalar-only operations produce individual Activities:
 In best-effort mode the pre-read and write are not one atomic unit, so concurrent changes can make
 `old` stale. In `auditedTransaction` they share a transaction, subject to that transaction's
 isolation level. The adapter uses the configured `idField` (`id` by default) for `subject_id` and
-may issue private pre/post reads to obtain the complete diff without changing the caller's return
-shape. If a caller supplies `select`, it must explicitly include the configured identity field; if
+may issue private pre/post reads to obtain the audit diff without changing the caller's return
+shape. Those reads include fields visible from the supplied client plus fields explicitly listed
+in `auditFields`; each listed field is re-included with local `omit: false`. A globally omitted
+field that is not in `auditFields` is deliberately absent from the diff. If a caller supplies
+`select`, it must explicitly include the configured identity field; if
 it supplies local `omit`, that field must not be `true`. The adapter rejects either explicit
-exclusion before the mutation and uses `omit: { [idField]: false }` for its own private reads so a
-global omission does not affect them. A client configured to globally omit the identity field is
+exclusion before the mutation and re-includes `idField` for its own private reads. A client
+configured to globally omit the identity field is
 not supported for audited mutations because the adapter cannot discover that configuration through
 a public API while also preserving the caller's return shape. Consumers must pass a client whose
 identity is globally visible; if the returned record still lacks it, the adapter fails with the
 documented best-effort caveat. Compound identities remain out of scope for 0.2.
+
+`withoutLogging()` and global `disableLogging()` bypass normalization, identity validation,
+private reads and Activity persistence entirely; the original Prisma mutation and return shape
+remain untouched.
 
 ## Bulk normalization
 
@@ -147,6 +192,24 @@ runtime metadata.
 Database-level referential cascades are not nested operations visible to the client extension and
 remain outside automatic coverage. Applications that require them in the trail must emit an
 explicit Aggregate/manual Activity.
+
+## Coverage matrix
+
+| Prisma operation | `$extends` client | `auditedTransaction` | Activity shape / limitation |
+|---|---|---|---|
+| `create` | ✅ best-effort | ✅ iff-committed | Individual `{ attributes, old: {} }` |
+| `update` | ✅ best-effort | ✅ iff-committed | Individual old/new; best-effort old read has a race window |
+| `delete` | ✅ best-effort | ✅ iff-committed | Individual `{ attributes: {}, old }` |
+| `upsert` | ✅ best-effort | ✅ iff-committed | Pre-read selects `created` or `updated` |
+| `createMany` / `updateMany` / `deleteMany` | ✅ best-effort | ✅ iff-committed | One Aggregate with returned count |
+| `*ManyAndReturn` where Prisma supports it | ✅ best-effort | ✅ iff-committed | One Aggregate with returned-array length |
+| configured nested `create` / `update` / `upsert` | ✅ best-effort | ✅ iff-committed | One top-level Aggregate; no child expansion |
+| unconfigured relation field | ⚠️ not detected as nested | ⚠️ not detected as nested | Configure `relationFields`; no DMMF guessing |
+| database referential cascade | ❌ | ❌ | Emit an explicit/manual Aggregate if required |
+
+`$extends` still runs the model mutation if Activity persistence later fails; this is the defining
+best-effort limitation. `auditedTransaction` passes a manual proxy over the exact `tx` delegates,
+so every pre/post read and Activity insert uses the same live transaction.
 
 ## Portable value normalization
 

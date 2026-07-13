@@ -267,7 +267,7 @@ function activityValue(
     case 'subject_type':
       return activity.subject?.type ?? null;
     case 'subject_id':
-      return activity.subject === null ? null : String(activity.subject?.id);
+      return activity.subject?.id === null || activity.subject === null ? null : String(activity.subject.id);
     case 'causer_type':
       return activity.causer?.type ?? null;
     case 'causer_id':

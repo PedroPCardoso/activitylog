@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import {
   activityLogContextStorage,
@@ -135,6 +135,20 @@ describe('activity log context', () => {
     await logger.activity().log('enabled');
 
     expect(persisted).toEqual([expect.objectContaining({ description: 'enabled' })]);
+  });
+
+  it('types and returns lazy thenables as native promises while retaining context', async () => {
+    const lazy = {
+      extraMethod: () => 'lazy-only',
+      then: (resolve: (value: number) => unknown) => Promise.resolve(resolve(42)),
+    } as PromiseLike<number> & { extraMethod(): string };
+
+    const result = withoutLogging(() => lazy);
+
+    expectTypeOf(result).toEqualTypeOf<Promise<number>>();
+    expect(result).not.toBe(lazy);
+    expect('extraMethod' in result).toBe(false);
+    await expect(result).resolves.toBe(42);
   });
 
   it('serializes causer and batch across a simulated job boundary', async () => {

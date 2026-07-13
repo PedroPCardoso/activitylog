@@ -1,5 +1,6 @@
 import {
   ActivityLogger,
+  DiffEngine,
   mergeLogOptions,
   resolveLogOptions,
   subjectRef,
@@ -14,7 +15,6 @@ import {
 import type { EntityManager, EntityMetadata, ObjectLiteral } from 'typeorm';
 
 import type { ActivityLogSubscriberOptions } from './activity-log.types';
-import { DiffEngine } from './diff-engine';
 import { getLogsActivityOptions } from './logs-activity.decorator';
 
 export interface RecordTypeOrmActivityInput {

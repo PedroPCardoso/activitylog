@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../../.context/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+}
+
+model Post {
+  id       Int    @id @default(autoincrement())
+  title    String
+  authorId Int
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model AuditValue {
+  id         Int      @id @default(autoincrement())
+  bigint     BigInt
+  occurredAt DateTime
+  decimal    Decimal
+  bytes      Bytes
+  payload    Json?
+}

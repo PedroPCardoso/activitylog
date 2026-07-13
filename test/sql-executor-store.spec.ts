@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   InvalidIdentifierException,
   SqlExecutorStore,
+  aggregateSubjectRef,
   createActivityLogger,
   subjectRef,
   type NewActivity,
@@ -54,6 +55,26 @@ describe('SqlExecutorStore', () => {
         subject: { type: 'Order', id: '12' },
         event: 'created',
         properties: { plan: 'pro' },
+      }),
+    ]);
+  });
+
+  it('preserves an Aggregate subject type when its id is null', async () => {
+    const sqlite = createSqliteTestDatabase();
+    createSqliteActivityLogSchema(sqlite.database);
+    const store = new SqlExecutorStore({ dataSource: sqlite.dataSource });
+
+    await createActivityLogger({ store })
+      .activity()
+      .performedOn(aggregateSubjectRef('User'))
+      .withProperties({ aggregate: true, criteria: {}, changes: {}, affected: 2 })
+      .event('updated')
+      .log('User updated');
+
+    await expect(store.query({})).resolves.toEqual([
+      expect.objectContaining({
+        subject: { type: 'User', id: null },
+        properties: { aggregate: true, criteria: {}, changes: {}, affected: 2 },
       }),
     ]);
   });

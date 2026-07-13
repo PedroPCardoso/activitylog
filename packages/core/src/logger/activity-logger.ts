@@ -7,9 +7,9 @@ import { createActivityTimestamp } from '../types/time.types';
 import type {
   ActivityEvent,
   ActivityProperties,
+  ActivitySubjectRef,
   CauserRef,
   NewActivity,
-  SubjectRef,
 } from '../types/activity.types';
 import type { ActivityStore } from '../types/store.types';
 import type { LogOptions, ResolvedLogOptions } from '../types/log-options.types';
@@ -27,7 +27,7 @@ export type ActivityTap = (activity: NewActivity) => void | NewActivity;
 
 interface ActivityBuilderState {
   logName: string;
-  subject: SubjectRef | null;
+  subject: ActivitySubjectRef | null;
   causer?: CauserRef | null;
   properties: ActivityProperties;
   event: ActivityEvent | null;
@@ -69,11 +69,11 @@ export class ActivityLogBuilder {
     private readonly state: ActivityBuilderState,
   ) {}
 
-  performedOn(subject: SubjectRef): ActivityLogBuilder {
+  performedOn(subject: ActivitySubjectRef): ActivityLogBuilder {
     return this.copy({ subject: copyRef(subject) });
   }
 
-  on(subject: SubjectRef): ActivityLogBuilder {
+  on(subject: ActivitySubjectRef): ActivityLogBuilder {
     return this.performedOn(subject);
   }
 
@@ -186,6 +186,6 @@ function assertValidDate(value: Date): void {
   }
 }
 
-function copyRef<Ref extends SubjectRef | CauserRef>(ref: Ref): Ref {
+function copyRef<Ref extends ActivitySubjectRef | CauserRef>(ref: Ref): Ref {
   return { ...ref };
 }

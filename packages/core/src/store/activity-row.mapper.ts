@@ -6,7 +6,7 @@ export function mapActivityRow(row: SqlRow): Activity {
     id: row.id as ActivityId,
     logName: requiredString(row.log_name, 'log_name'),
     description: requiredString(row.description, 'description'),
-    subject: mapRef(row.subject_type, row.subject_id),
+    subject: mapSubjectRef(row.subject_type, row.subject_id),
     causer: mapRef(row.causer_type, row.causer_id),
     event: nullableString(row.event),
     properties: parseProperties(row.properties),
@@ -20,6 +20,13 @@ function mapRef(type: unknown, id: unknown): { type: string; id: string } | null
   const resolvedId = nullableString(id);
 
   return resolvedType === null || resolvedId === null ? null : { type: resolvedType, id: resolvedId };
+}
+
+function mapSubjectRef(type: unknown, id: unknown): { type: string; id: string | null } | null {
+  const resolvedType = nullableString(type);
+  const resolvedId = nullableString(id);
+
+  return resolvedType === null ? null : { type: resolvedType, id: resolvedId };
 }
 
 function parseProperties(value: unknown): ActivityProperties {
