@@ -1,5 +1,8 @@
 export * from 'activitylog-core';
-
-export interface PrismaActivityLogAdapterPlaceholder {
-  readonly adapter: 'prisma';
-}
+export { auditedTransaction, prismaActivityLog } from './prisma-adapter';
+export type {
+  AuditedPrismaTransactionClient,
+  PrismaActivityLogOptions,
+  PrismaModelConfig,
+  PrismaModelMap,
+} from './prisma.types';

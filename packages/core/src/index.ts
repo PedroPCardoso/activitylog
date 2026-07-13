@@ -6,18 +6,21 @@ export {
 export {
   disableLogging,
   enableLogging,
+  isActivityLoggingEnabled,
   runWithContext,
   serializeContext,
   withBatch,
   withoutLogging,
 } from './context/activitylog-context.helpers';
 export type { SerializedActivityLogContext } from './context/activitylog-context.helpers';
-export { causerRef, subjectRef } from './types/activity.types';
+export { aggregateSubjectRef, causerRef, subjectRef } from './types/activity.types';
 export type {
+  AggregateSubjectRef,
   Activity,
   ActivityEvent,
   ActivityId,
   ActivityProperties,
+  ActivitySubjectRef,
   CauserRef,
   EntityRef,
   NewActivity,
@@ -55,6 +58,8 @@ export { InvalidActivityDateException } from './exceptions/invalid-activity-date
 export { UnsupportedActivityFilterException } from './exceptions/unsupported-filter.exception';
 export { ActivityLogger, ActivityLogBuilder, createActivityLogger } from './logger/activity-logger';
 export type { ActivityLoggerOptions, ActivityTap } from './logger/activity-logger';
+export { DiffEngine } from './diff/diff-engine';
+export type { DiffInput } from './diff/diff-engine';
 export { SqlExecutorStore } from './store/sql-executor.store';
 export type { SqlExecutorStoreOptions } from './store/sql-executor.store';
 export { ACTIVITY_LOG_MIGRATIONS } from './migrations/activity-log.migrations';

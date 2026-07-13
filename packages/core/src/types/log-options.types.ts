@@ -1,4 +1,4 @@
-import type { ActivityEvent, NewActivity, SubjectRef } from './activity.types';
+import type { ActivityEvent, ActivitySubjectRef, NewActivity } from './activity.types';
 import type { ActivityStore } from './store.types';
 
 export type MaybePromise<T> = T | Promise<T>;
@@ -10,13 +10,13 @@ export interface DiffSnapshot {
 
 export interface DescriptionContext {
   event: ActivityEvent;
-  subject: SubjectRef | null;
+  subject: ActivitySubjectRef | null;
   diff: DiffSnapshot;
 }
 
 export interface BeforePersistContext {
   event: ActivityEvent;
-  subject: SubjectRef | null;
+  subject: ActivitySubjectRef | null;
   options: ResolvedLogOptions;
 }
 

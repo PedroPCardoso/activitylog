@@ -1,12 +1,13 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import type { DiffSnapshot, LogOptions, ResolvedLogOptions } from 'activitylog-core';
+import type { DiffSnapshot, LogOptions, ResolvedLogOptions } from '../types/log-options.types';
 
 export interface DiffInput {
   old: Readonly<Record<string, unknown>>;
   attributes: Readonly<Record<string, unknown>>;
   dirty?: readonly string[];
-  options?: Pick<LogOptions, 'logOnly' | 'logExcept' | 'logOnlyDirty'> | Pick<ResolvedLogOptions, 'logOnly' | 'logExcept' | 'logOnlyDirty'>;
+  options?: Pick<LogOptions, 'logOnly' | 'logExcept' | 'logOnlyDirty'>
+    | Pick<ResolvedLogOptions, 'logOnly' | 'logExcept' | 'logOnlyDirty'>;
 }
 
 export class DiffEngine {
@@ -21,20 +22,12 @@ export class DiffEngine {
 
       if (input.options?.logOnlyDirty === true) {
         if (!hasAttribute || !hasOld || isDeepStrictEqual(input.attributes[key], input.old[key])) {
-          if (hasAttribute !== hasOld) {
-            // Creates and deletes are dirty by definition.
-          } else {
-            continue;
-          }
+          if (hasAttribute === hasOld) continue;
         }
       }
 
-      if (hasAttribute) {
-        attributes[key] = input.attributes[key];
-      }
-      if (hasOld) {
-        old[key] = input.old[key];
-      }
+      if (hasAttribute) attributes[key] = input.attributes[key];
+      if (hasOld) old[key] = input.old[key];
     }
 
     return { attributes, old };

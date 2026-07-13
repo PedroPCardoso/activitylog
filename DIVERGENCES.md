@@ -16,6 +16,12 @@ they had a trustworthy old entity; `auditedUpdate()` is the explicit single-row,
 alternative. Bulk writes require one Aggregate activity rather than an invented per-row diff.
 See [`docs/TYPEORM.md`](docs/TYPEORM.md) for the operation-by-operation matrix.
 
+For Prisma, `$extends` is explicitly best-effort: its old-value read, mutation and Activity write
+are not one atomic unit. `auditedTransaction()` supplies the iff-committed path by proxying the
+exact interactive transaction client. Bulk and configured nested writes become one Aggregate
+activity with a null subject id. See [`docs/PRISMA.md`](docs/PRISMA.md) for the Prisma matrix and
+configuration boundaries.
+
 ## Properties always use a stable diff envelope
 
 Automatic entity changes store `properties.attributes` and `properties.old`. Creates have an

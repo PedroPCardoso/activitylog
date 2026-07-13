@@ -5,7 +5,7 @@ ORM-agnostic entity audit trail for TypeScript, with the DX of
 nothing about any ORM or about NestJS; adapters are first-class.
 
 > **Status:** early development. The core supports manual logging, request/job context and the
-> fluent query API. The NestJS module and TypeORM lifecycle subscriber are available.
+> fluent query API. The NestJS, TypeORM and Prisma integrations are available.
 
 ## The bet
 
@@ -137,6 +137,32 @@ Real `save`, `remove`, and `softRemove` operations produce `{ attributes, old }`
 `auditedUpdate(repository, criteria, patch)` instead of direct `.update()`/update QueryBuilder when
 the read, mutation, diff and Activity must form one iff-committed transaction. See
 [`docs/TYPEORM.md`](docs/TYPEORM.md) for the complete coverage matrix and explicit gaps.
+
+## Prisma
+
+`prismaActivityLog(prisma, options)` returns a `$extends` client for convenient best-effort
+auditing. Pass an explicit SQL dialect, because Prisma has no stable public provider-introspection
+API. Use `auditedTransaction()` when mutation and Activity must commit or roll back together:
+
+```ts
+import { auditedTransaction, prismaActivityLog } from 'activitylog-nextjs/prisma';
+
+const options = {
+  dialect: 'postgres' as const,
+  models: { User: { relationFields: ['posts'] } },
+};
+
+const activityPrisma = prismaActivityLog(prisma, options);
+await activityPrisma.user.update({ where: { id }, data: { name: 'Ada' } });
+
+await auditedTransaction(prisma, options, async (tx) => {
+  await tx.user.update({ where: { id }, data: { name: 'Grace' } });
+});
+```
+
+Bulk and configured nested writes produce one Aggregate activity instead of invented per-row
+diffs. See [`docs/PRISMA.md`](docs/PRISMA.md) for model metadata, value normalization and the
+complete coverage matrix.
 
 ## Querying activities
 

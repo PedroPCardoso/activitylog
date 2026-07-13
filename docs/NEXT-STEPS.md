@@ -24,12 +24,13 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 
 ## 🎯 Issue próxima a executar
 
-### `#18 — Adapter Prisma: $extends + auditedTransaction`
+### `#19 — Publish 0.2 (nextjs/prisma)`
 
-O contrato de dialeto explícito, transação, bulk e nested writes foi congelado
-em `#7` e [`PRISMA.md`](./PRISMA.md). A implementação da #18 pode prosseguir
-enquanto a publicação 0.1 permanece preparada no PR de versão #30, aguardando
-somente a credencial npm para concluir `#17`.
+O contrato Prisma foi congelado em `#7` e o adapter `$extends` best-effort,
+`auditedTransaction` iff-committed, rollback e Aggregate activities foram
+entregues em `#18`. O consumer smoke e a publicação 0.2 podem ser preparados,
+mas a publicação 0.1 permanece no PR de versão #30 aguardando a credencial npm
+necessária para concluir `#17` e desbloquear o release público seguinte.
 
 ---
 

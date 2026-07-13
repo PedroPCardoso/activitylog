@@ -10,13 +10,18 @@ export interface SerializedActivityLogContext {
 
 let loggingEnabled = true;
 
-export function runWithContext<T>(context: SerializedActivityLogContext | undefined, callback: () => T): T {
+type ContextualResult<T> = T extends PromiseLike<infer Value> ? Promise<Awaited<Value>> : T;
+
+export function runWithContext<T>(
+  context: SerializedActivityLogContext | undefined,
+  callback: () => T,
+): ContextualResult<T> {
   return activityLogContextStorage.run(
     {
       causer: context?.causer === undefined || context.causer === null ? context?.causer : { ...context.causer },
       batchUuid: context?.batchUuid,
     },
-    callback,
+    () => retainThenable(callback()),
   );
 }
 
@@ -33,24 +38,24 @@ export function serializeContext(): SerializedActivityLogContext | undefined {
   };
 }
 
-export function withBatch<T>(callback: () => T): T {
+export function withBatch<T>(callback: () => T): ContextualResult<T> {
   const context = getActivityLogContext();
   return activityLogContextStorage.run(
     {
       ...context,
       batchUuid: context?.batchUuid ?? randomUUID(),
     },
-    callback,
+    () => retainThenable(callback()),
   );
 }
 
-export function withoutLogging<T>(callback: () => T): T {
+export function withoutLogging<T>(callback: () => T): ContextualResult<T> {
   return activityLogContextStorage.run(
     {
       ...getActivityLogContext(),
       withoutLogging: true,
     },
-    callback,
+    () => retainThenable(callback()),
   );
 }
 
@@ -64,4 +69,14 @@ export function enableLogging(): void {
 
 export function isActivityLoggingEnabled(): boolean {
   return loggingEnabled;
+}
+
+function retainThenable<T>(value: T): ContextualResult<T> {
+  return (isPromiseLike(value) ? Promise.resolve(value) : value) as ContextualResult<T>;
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return value !== null
+    && (typeof value === 'object' || typeof value === 'function')
+    && typeof (value as { then?: unknown }).then === 'function';
 }
