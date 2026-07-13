@@ -1,10 +1,9 @@
-import { UnsupportedActivityFilterException } from '../exceptions/unsupported-filter.exception';
 import { dialectFor } from '../sql/sql-dialect';
 import { assertSafeIdentifier } from '../sql/validation';
 import { mapActivityRow } from './activity-row.mapper';
 import { stringifyCanonicalJson } from './canonical-json';
 import type { Activity, NewActivity } from '../types/activity.types';
-import type { ActivityFilter } from '../types/query.types';
+import type { ActivityFilter, PropertyFilter } from '../types/query.types';
 import type { ActivityStore, TransactionRef } from '../types/store.types';
 import type { SqlDataSource, SqlRow } from '../sql/datasource.types';
 
@@ -81,13 +80,6 @@ export class SqlExecutorStore implements ActivityStore {
   }
 
   private selectStatement(filter: ActivityFilter): { sql: string; params: readonly unknown[] } {
-    if (filter.properties !== undefined) {
-      throw new UnsupportedActivityFilterException('properties');
-    }
-    if (filter.cursor !== undefined) {
-      throw new UnsupportedActivityFilterException('cursor');
-    }
-
     const dialect = dialectFor(this.options.dataSource.dialect);
     const params: unknown[] = [];
     const clauses: string[] = [];
@@ -127,8 +119,17 @@ export class SqlExecutorStore implements ActivityStore {
         timestampValue(filter.to, this.options.dataSource.dialect),
       );
     }
+    if (filter.includeAggregates === false) {
+      clauses.push(nonAggregatePredicate(this.options.dataSource.dialect, dialect));
+    }
+    for (const property of filter.properties ?? []) {
+      clauses.push(propertyPredicate(property, this.options.dataSource.dialect, dialect, params));
+    }
 
     const order = filter.sort === 'asc' ? 'ASC' : 'DESC';
+    if (filter.cursor !== undefined) {
+      clauses.push(cursorPredicate(filter.cursor, order, this.options.dataSource.dialect, dialect, params));
+    }
     const where = clauses.length === 0 ? '' : ` WHERE ${clauses.join(' AND ')}`;
     const limit = filter.limit === undefined ? '' : ` LIMIT ${appendParam(params, dialect, filter.limit)}`;
     const selectColumns = COLUMNS.map((column) => quote(dialect, column)).join(', ');
@@ -154,6 +155,92 @@ function addRange(
 ): void {
   params.push(value);
   clauses.push(`${quote(dialect, column)} ${operator} ${dialect.placeholder(params.length)}`);
+}
+
+function cursorPredicate(
+  cursor: NonNullable<ActivityFilter['cursor']>,
+  order: 'ASC' | 'DESC',
+  dialectName: SqlDataSource['dialect'],
+  dialect: ReturnType<typeof dialectFor>,
+  params: unknown[],
+): string {
+  const operator = order === 'ASC' ? '>' : '<';
+  const timestamp = timestampValue(cursor.createdAt, dialectName);
+  params.push(timestamp);
+  const first = dialect.placeholder(params.length);
+  params.push(timestamp);
+  const second = dialect.placeholder(params.length);
+  params.push(String(cursor.id));
+  const third = dialect.placeholder(params.length);
+  const createdAt = quote(dialect, 'created_at');
+  const id = quote(dialect, 'id');
+
+  return `(${createdAt} ${operator} ${first} OR (${createdAt} = ${second} AND ${id} ${operator} ${third}))`;
+}
+
+function nonAggregatePredicate(
+  dialectName: SqlDataSource['dialect'],
+  dialect: ReturnType<typeof dialectFor>,
+): string {
+  const properties = quote(dialect, 'properties');
+
+  switch (dialectName) {
+    case 'postgres':
+      return `COALESCE(${properties} ->> 'aggregate', 'false') <> 'true'`;
+    case 'mysql':
+      return `COALESCE(JSON_UNQUOTE(JSON_EXTRACT(${properties}, '$.aggregate')), 'false') <> 'true'`;
+    case 'sqlite':
+      return `COALESCE(json_extract(${properties}, '$.aggregate'), 0) <> 1`;
+  }
+}
+
+function propertyPredicate(
+  filter: PropertyFilter,
+  dialectName: SqlDataSource['dialect'],
+  dialect: ReturnType<typeof dialectFor>,
+  params: unknown[],
+): string {
+  const expression = propertyExpression(filter.path, dialectName, dialect, params);
+
+  if (filter.operator === 'exists') {
+    return `${expression} IS NOT NULL`;
+  }
+
+  params.push(filter.operator === 'contains' ? String(filter.value) : String(filter.value));
+  const placeholder = dialect.placeholder(params.length);
+
+  if (filter.operator === 'contains') {
+    return containsPredicate(expression, placeholder, dialectName);
+  }
+
+  return `${expression} ${filter.operator} ${placeholder}`;
+}
+
+function propertyExpression(
+  path: string,
+  dialectName: SqlDataSource['dialect'],
+  dialect: ReturnType<typeof dialectFor>,
+  params: unknown[],
+): string {
+  const properties = quote(dialect, 'properties');
+  const normalizedPath = dialectName === 'postgres' ? path.replace(/^\$\.?/, '') : path.startsWith('$') ? path : `$.${path}`;
+  params.push(normalizedPath);
+  const placeholder = dialect.placeholder(params.length);
+
+  switch (dialectName) {
+    case 'postgres':
+      return `${properties} #>> string_to_array(${placeholder}, '.')`;
+    case 'mysql':
+      return `JSON_UNQUOTE(JSON_EXTRACT(${properties}, ${placeholder}))`;
+    case 'sqlite':
+      return `json_extract(${properties}, ${placeholder})`;
+  }
+}
+
+function containsPredicate(expression: string, placeholder: string, dialectName: SqlDataSource['dialect']): string {
+  return dialectName === 'postgres'
+    ? `POSITION(${placeholder} IN ${expression}) > 0`
+    : `INSTR(${expression}, ${placeholder}) > 0`;
 }
 
 function appendParam(params: unknown[], dialect: ReturnType<typeof dialectFor>, value: unknown): string {

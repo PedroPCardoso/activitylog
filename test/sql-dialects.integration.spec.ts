@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   ACTIVITY_LOG_MIGRATIONS,
   SqlExecutorStore,
+  activityQuery,
   createActivityLogger,
   type SupportedDialect,
 } from 'activitylog-core';
@@ -49,13 +50,17 @@ for (const dialect of availableExternalDialects()) {
         .withProperties({ plan: 'pro' })
         .log('created');
 
-      await expect(store.query({ logName: 'billing' })).resolves.toEqual([
+      await expect(activityQuery(store).inLog('billing').whereProperty('plan', 'pro').paginate(10)).resolves.toEqual(
         expect.objectContaining({
-          logName: 'billing',
-          event: 'created',
-          properties: { plan: 'pro' },
+          items: [
+            expect.objectContaining({
+              logName: 'billing',
+              event: 'created',
+              properties: { plan: 'pro' },
+            }),
+          ],
         }),
-      ]);
+      );
     });
   });
 }
