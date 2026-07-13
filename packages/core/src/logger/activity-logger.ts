@@ -1,5 +1,7 @@
 import { InvalidActivityDateException } from '../exceptions/invalid-activity-date.exception';
 import { getActivityLogContext } from '../context/activitylog-context';
+import { resolveLogOptions } from '../options/resolve-log-options';
+import { redactActivity } from '../redaction/redact-activity';
 import { createActivityTimestamp } from '../types/time.types';
 import type {
   ActivityEvent,
@@ -9,6 +11,7 @@ import type {
   SubjectRef,
 } from '../types/activity.types';
 import type { ActivityStore } from '../types/store.types';
+import type { LogOptions, ResolvedLogOptions } from '../types/log-options.types';
 
 const DEFAULT_LOG_NAME = 'default';
 
@@ -16,6 +19,7 @@ export interface ActivityLoggerOptions {
   store: ActivityStore;
   logName?: string;
   now?: () => Date;
+  logOptions?: LogOptions;
 }
 
 export type ActivityTap = (activity: NewActivity) => void | NewActivity;
@@ -37,14 +41,16 @@ export function createActivityLogger(options: ActivityLoggerOptions): ActivityLo
 export class ActivityLogger {
   private readonly defaultLogName: string;
   private readonly now: () => Date;
+  private readonly logOptions: ResolvedLogOptions;
 
   constructor(private readonly options: ActivityLoggerOptions) {
-    this.defaultLogName = options.logName ?? DEFAULT_LOG_NAME;
+    this.logOptions = resolveLogOptions(options.logOptions);
+    this.defaultLogName = options.logName ?? this.logOptions.useLogName ?? DEFAULT_LOG_NAME;
     this.now = options.now ?? (() => new Date());
   }
 
   activity(logName = this.defaultLogName): ActivityLogBuilder {
-    return new ActivityLogBuilder(this.options.store, this.now, {
+    return new ActivityLogBuilder(this.options.store, this.now, this.logOptions, {
       logName,
       subject: null,
       causer: null,
@@ -59,6 +65,7 @@ export class ActivityLogBuilder {
   constructor(
     private readonly store: ActivityStore,
     private readonly now: () => Date,
+    private readonly logOptions: ResolvedLogOptions,
     private readonly state: ActivityBuilderState,
   ) {}
 
@@ -120,11 +127,26 @@ export class ActivityLogBuilder {
       activity = tap(activity) ?? activity;
     }
 
+    if (this.logOptions.beforePersist) {
+      activity =
+        (await this.logOptions.beforePersist(activity, {
+          event: activity.event ?? 'created',
+          subject: activity.subject,
+          options: this.logOptions,
+        })) ?? activity;
+    }
+
+    activity = redactActivity(activity, this.logOptions.redact);
+
+    if (this.logOptions.dontSubmitEmptyLogs && hasEmptyDiff(activity)) {
+      return;
+    }
+
     await this.store.persist([activity]);
   }
 
   private copy(change: Partial<ActivityBuilderState>): ActivityLogBuilder {
-    return new ActivityLogBuilder(this.store, this.now, {
+    return new ActivityLogBuilder(this.store, this.now, this.logOptions, {
       ...this.state,
       ...change,
       properties: change.properties ?? this.state.properties,
@@ -137,6 +159,15 @@ export class ActivityLogBuilder {
     assertValidDate(timestamp);
     return new Date(timestamp.getTime());
   }
+}
+
+function hasEmptyDiff(activity: NewActivity): boolean {
+  const { attributes, old } = activity.properties;
+  return isEmptyRecord(attributes) && isEmptyRecord(old);
+}
+
+function isEmptyRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0;
 }
 
 function assertValidDate(value: Date): void {
