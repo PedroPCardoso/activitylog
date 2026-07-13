@@ -20,6 +20,7 @@
     "test:watch": "vitest",
     "lint": "eslint \"packages/*/src/**/*.ts\" \"test/**/*.ts\"",
     "smoke:nestjs": "node scripts/smoke-nestjs-consumer.cjs",
+    "smoke:prisma": "node scripts/smoke-prisma-consumer.cjs",
     "release": "changeset publish"
   },
   "devDependencies": {

@@ -28,9 +28,10 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 
 O contrato Prisma foi congelado em `#7` e o adapter `$extends` best-effort,
 `auditedTransaction` iff-committed, rollback e Aggregate activities foram
-entregues em `#18`. O consumer smoke e a publicação 0.2 podem ser preparados,
-mas a publicação 0.1 permanece no PR de versão #30 aguardando a credencial npm
-necessária para concluir `#17` e desbloquear o release público seguinte.
+entregues em `#18`. O consumer smoke instalado foi preparado para CI/release;
+a publicação 0.2 ainda depende da publicação 0.1, que permanece no PR de versão
+#30 aguardando a credencial npm necessária para concluir `#17` e desbloquear o
+release público seguinte.
 
 ---
 
