@@ -50,7 +50,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "activitylog-core": "^0.0.0"
+    "activitylog-core": "^0.0.0 || ^0.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^10 || ^11",

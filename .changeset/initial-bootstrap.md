@@ -1,7 +1,6 @@
 ---
-"activitylog-core": patch
-"activitylog-nestjs": patch
-"activitylog-nextjs": patch
+"activitylog-core": minor
+"activitylog-nestjs": minor
 ---
 
-Bootstrap the activitylog monorepo packages.
+Release the first public core and NestJS packages.

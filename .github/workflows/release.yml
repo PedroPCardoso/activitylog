@@ -25,8 +25,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:coverage
+
       - name: Build
         run: npm run build
+
+      - name: NestJS consumer smoke
+        run: npm run smoke:nestjs
 
       - name: Create release PR or publish
         uses: changesets/action@v1
