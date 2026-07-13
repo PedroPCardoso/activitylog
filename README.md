@@ -132,11 +132,11 @@ queue-boundary caveat.
 ## TypeORM
 
 Decorate audited entities with `@LogsActivity(options)` and register one
-`ActivityLogSubscriber` after the TypeORM `DataSource` is initialized. Real `save`, `remove`, and
-`softRemove` operations produce `{ attributes, old }` diffs, and transactional operations persist
-their Activity through the event manager so a rollback removes both records. See
-[`docs/TYPEORM.md`](docs/TYPEORM.md) for registration, filters, and the explicitly unsupported
-bulk/update paths.
+subscriber with `registerActivityLogSubscriber()` after the TypeORM `DataSource` is initialized.
+Real `save`, `remove`, and `softRemove` operations produce `{ attributes, old }` diffs. Use
+`auditedUpdate(repository, criteria, patch)` instead of direct `.update()`/update QueryBuilder when
+the read, mutation, diff and Activity must form one iff-committed transaction. See
+[`docs/TYPEORM.md`](docs/TYPEORM.md) for the complete coverage matrix and explicit gaps.
 
 ## Querying activities
 
@@ -160,6 +160,7 @@ the SQL and ORM schema references.
 - [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) — roadmap
 - [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md) — schema references by dialect and ORM
 - [`docs/TYPEORM.md`](docs/TYPEORM.md) — TypeORM decorator, subscriber and transaction behavior
+- [`DIVERGENCES.md`](DIVERGENCES.md) — deliberate differences from Spatie and adapter limitations
 
 ## License
 

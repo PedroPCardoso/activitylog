@@ -13,7 +13,7 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 | 3 | Contexto: ALS singleton, causer lazy, batch, `withoutLogging` | `activitylog-core` | — |
 | 4 | Query API tipada | `activitylog-core` | — |
 | 5 | ✅ Módulo NestJS (`forRoot`/`forFeature`, service, middleware+interceptor) | `activitylog-nestjs` | — |
-| 6 | 🟡 **Adapter TypeORM** (`@LogsActivity` + subscriber ✅; `auditedUpdate` pendente) | `activitylog-nestjs` | **0.1** |
+| 6 | ✅ **Adapter TypeORM** (`@LogsActivity` + subscriber + `auditedUpdate`) | `activitylog-nestjs` | **0.1** |
 | 7 | **Adapter Prisma** (`$extends` best-effort + `auditedTransaction` iff) | `activitylog-nextjs` | **0.2** (fast-follow) |
 | 8 | Adapter Drizzle (RETURNING) | `activitylog-nextjs` | 0.3 |
 | 9 | Operação: `prune()` + CLI + docs + smoke + release | todos | 0.x → launch |
@@ -24,11 +24,11 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 
 ## 🎯 Issue próxima a executar
 
-### `#16 — TypeORM auditedUpdate + matriz de cobertura`
+### `#17 — Smoke consumer NestJS + release 0.1`
 
-O decorator, DiffEngine e subscriber foram entregues em `#15` para `save`,
-`remove` e `softRemove`. A próxima entrega cobre updates explícitos com re-read
-e transação viva, além de documentar honestamente as lacunas de cada operação.
+O adapter TypeORM e sua matriz de cobertura foram concluídos em `#15`/`#16`.
+A próxima entrega empacota `activitylog-core` e `activitylog-nestjs`, instala os
+tarballs em um consumer NestJS real e prepara/publica o marco 0.1.
 
 ---
 
