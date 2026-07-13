@@ -5,7 +5,7 @@ ORM-agnostic entity audit trail for TypeScript, with the DX of
 nothing about any ORM or about NestJS; adapters are first-class.
 
 > **Status:** early development. The core supports manual logging, request/job context and the
-> fluent query API. The NestJS module is available; ORM adapters are still being delivered.
+> fluent query API. The NestJS module and TypeORM lifecycle subscriber are available.
 
 ## The bet
 
@@ -129,6 +129,15 @@ identity source without adding a runtime dependency to activitylog. See
 [`docs/NESTJS_CLS.md`](docs/NESTJS_CLS.md) for the lazy resolver recipe, middleware ordering and
 queue-boundary caveat.
 
+## TypeORM
+
+Decorate audited entities with `@LogsActivity(options)` and register one
+`ActivityLogSubscriber` after the TypeORM `DataSource` is initialized. Real `save`, `remove`, and
+`softRemove` operations produce `{ attributes, old }` diffs, and transactional operations persist
+their Activity through the event manager so a rollback removes both records. See
+[`docs/TYPEORM.md`](docs/TYPEORM.md) for registration, filters, and the explicitly unsupported
+bulk/update paths.
+
 ## Querying activities
 
 `activityQuery(store)` provides immutable typed scopes for log, subject, causer, event, batch,
@@ -150,6 +159,7 @@ the SQL and ORM schema references.
 - [`CONTEXT.md`](CONTEXT.md) — domain glossary + the `iff-committed` invariant
 - [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) — roadmap
 - [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md) — schema references by dialect and ORM
+- [`docs/TYPEORM.md`](docs/TYPEORM.md) — TypeORM decorator, subscriber and transaction behavior
 
 ## License
 

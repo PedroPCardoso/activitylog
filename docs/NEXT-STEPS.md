@@ -13,7 +13,7 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 | 3 | Contexto: ALS singleton, causer lazy, batch, `withoutLogging` | `activitylog-core` | — |
 | 4 | Query API tipada | `activitylog-core` | — |
 | 5 | ✅ Módulo NestJS (`forRoot`/`forFeature`, service, middleware+interceptor) | `activitylog-nestjs` | — |
-| 6 | **Adapter TypeORM** (`@LogsActivity` + subscriber + `auditedUpdate`) | `activitylog-nestjs` | **0.1** |
+| 6 | 🟡 **Adapter TypeORM** (`@LogsActivity` + subscriber ✅; `auditedUpdate` pendente) | `activitylog-nestjs` | **0.1** |
 | 7 | **Adapter Prisma** (`$extends` best-effort + `auditedTransaction` iff) | `activitylog-nextjs` | **0.2** (fast-follow) |
 | 8 | Adapter Drizzle (RETURNING) | `activitylog-nextjs` | 0.3 |
 | 9 | Operação: `prune()` + CLI + docs + smoke + release | todos | 0.x → launch |
@@ -24,11 +24,11 @@ Pacotes (D15): `activitylog-core` · `activitylog-nestjs` (módulo Nest + TypeOR
 
 ## 🎯 Issue próxima a executar
 
-### `#15 — Adapter TypeORM: @LogsActivity + subscriber + DiffEngine`
+### `#16 — TypeORM auditedUpdate + matriz de cobertura`
 
-O módulo NestJS, a façade e o contexto HTTP foram entregues em `#14`. A próxima
-entrega adiciona o adapter TypeORM para `save`, `remove` e `softRemove`, mantendo
-o diff e a persistência dentro do executor associado à mutação.
+O decorator, DiffEngine e subscriber foram entregues em `#15` para `save`,
+`remove` e `softRemove`. A próxima entrega cobre updates explícitos com re-read
+e transação viva, além de documentar honestamente as lacunas de cada operação.
 
 ---
 
