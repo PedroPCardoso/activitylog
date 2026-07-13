@@ -1,7 +1,16 @@
 import 'reflect-metadata';
 
-import { Inject, Injectable, Module, type DynamicModule, type Type } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Module,
+  type CallHandler,
+  type DynamicModule,
+  type ExecutionContext,
+  type Type,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { defer, firstValueFrom, type Observable } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 
 import type {
@@ -16,13 +25,45 @@ interface ActivityLogServiceLike {
 }
 
 interface ActivityLogModuleLike {
-  forRoot(options: LogOptions & { store: ActivityStore }): DynamicModule;
+  forRoot(
+    options: LogOptions & {
+      store: ActivityStore;
+      causerResolver?: (request: ActivityLogRequestLike) =>
+        | { type: string; id: string | number | bigint }
+        | null
+        | undefined;
+    },
+  ): DynamicModule;
   forFeature(options: LogOptions): DynamicModule;
+}
+
+interface ActivityLogRequestLike {
+  user?: {
+    id: string | number | bigint;
+    type?: string;
+  } | null;
+}
+
+interface ActivityLogMiddlewareLike {
+  use(
+    request: ActivityLogRequestLike,
+    response: unknown,
+    next: (error?: unknown) => void,
+  ): void;
+}
+
+interface ActivityLogInterceptorLike {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<unknown> | Promise<Observable<unknown>>;
 }
 
 interface NestActivityLogExports {
   ActivityLogModule?: ActivityLogModuleLike;
   ActivityLogService?: Type<ActivityLogServiceLike>;
+  ActivityLogMiddleware?: Type<ActivityLogMiddlewareLike>;
+  ActivityLogInterceptor?: Type<ActivityLogInterceptorLike>;
 }
 
 function createObservingStore(): { store: ActivityStore; persisted: NewActivity[] } {
@@ -47,6 +88,27 @@ async function nestExports(): Promise<Required<NestActivityLogExports>> {
   expect(exports.ActivityLogService).toBeDefined();
 
   return exports as Required<NestActivityLogExports>;
+}
+
+async function httpExports(): Promise<
+  Required<
+    Pick<
+      NestActivityLogExports,
+      'ActivityLogInterceptor' | 'ActivityLogMiddleware'
+    >
+  >
+> {
+  const exports = (await import('activitylog-nestjs')) as NestActivityLogExports;
+
+  expect(exports.ActivityLogMiddleware).toBeDefined();
+  expect(exports.ActivityLogInterceptor).toBeDefined();
+
+  return exports as Required<
+    Pick<
+      NestActivityLogExports,
+      'ActivityLogInterceptor' | 'ActivityLogMiddleware'
+    >
+  >;
 }
 
 describe('ActivityLogModule', () => {
@@ -119,6 +181,67 @@ describe('ActivityLogModule', () => {
       'feature',
       'call',
     ]);
+
+    await moduleRef.close();
+  });
+
+  it('opens middleware context before resolving request.user lazily', async () => {
+    const { ActivityLogModule, ActivityLogService } = await nestExports();
+    const { ActivityLogMiddleware } = await httpExports();
+    const observed = createObservingStore();
+    const moduleRef = await Test.createTestingModule({
+      imports: [ActivityLogModule.forRoot({ store: observed.store })],
+    }).compile();
+    const middleware = moduleRef.get(ActivityLogMiddleware);
+    const service = moduleRef.get(ActivityLogService);
+    const request: ActivityLogRequestLike = {};
+    let logging!: Promise<void>;
+
+    middleware.use(request, {}, () => {
+      request.user = { id: 'u1' };
+      logging = service.activity().log('from middleware');
+    });
+    await logging;
+
+    expect(observed.persisted[0]?.causer).toEqual({
+      type: 'User',
+      id: 'u1',
+    });
+
+    await moduleRef.close();
+  });
+
+  it('runs deferred interceptor handlers inside the request context', async () => {
+    const { ActivityLogModule, ActivityLogService } = await nestExports();
+    const { ActivityLogInterceptor } = await httpExports();
+    const observed = createObservingStore();
+    const moduleRef = await Test.createTestingModule({
+      imports: [ActivityLogModule.forRoot({ store: observed.store })],
+    }).compile();
+    const interceptor = moduleRef.get(ActivityLogInterceptor);
+    const service = moduleRef.get(ActivityLogService);
+    const request: ActivityLogRequestLike = {};
+    const context = {
+      switchToHttp: () => ({
+        getRequest: () => request,
+      }),
+    } as ExecutionContext;
+    const next: CallHandler = {
+      handle: () =>
+        defer(async () => {
+          request.user = { id: 7, type: 'Admin' };
+          await service.activity().log('from interceptor');
+          return 'done';
+        }),
+    };
+
+    const stream = await interceptor.intercept(context, next);
+    await firstValueFrom(stream);
+
+    expect(observed.persisted[0]?.causer).toEqual({
+      type: 'Admin',
+      id: 7,
+    });
 
     await moduleRef.close();
   });

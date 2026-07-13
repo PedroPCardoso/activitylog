@@ -1,9 +1,16 @@
-import { Module, type DynamicModule } from '@nestjs/common';
+import {
+  Module,
+  type DynamicModule,
+  type MiddlewareConsumer,
+  type NestModule,
+} from '@nestjs/common';
 
 import {
   ACTIVITYLOG_FEATURE_OPTIONS,
   ACTIVITYLOG_ROOT_OPTIONS,
 } from './activity-log.constants';
+import { ActivityLogInterceptor } from './activity-log.interceptor';
+import { ActivityLogMiddleware } from './activity-log.middleware';
 import { ActivityLogService } from './activity-log.service';
 import type {
   ActivityLogFeatureOptions,
@@ -14,7 +21,7 @@ import type {
 class ActivityLogFeatureModule {}
 
 @Module({})
-export class ActivityLogModule {
+export class ActivityLogModule implements NestModule {
   static forRoot(options: ActivityLogModuleOptions): DynamicModule {
     return {
       module: ActivityLogModule,
@@ -25,8 +32,15 @@ export class ActivityLogModule {
           useValue: options,
         },
         ActivityLogService,
+        ActivityLogMiddleware,
+        ActivityLogInterceptor,
       ],
-      exports: [ACTIVITYLOG_ROOT_OPTIONS, ActivityLogService],
+      exports: [
+        ACTIVITYLOG_ROOT_OPTIONS,
+        ActivityLogService,
+        ActivityLogMiddleware,
+        ActivityLogInterceptor,
+      ],
     };
   }
 
@@ -42,5 +56,9 @@ export class ActivityLogModule {
       ],
       exports: [ActivityLogService],
     };
+  }
+
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(ActivityLogMiddleware).forRoutes('*');
   }
 }
