@@ -107,8 +107,26 @@ export class SqlExecutorStore implements ActivityStore {
     }
     if (filter.event !== undefined) add('event', filter.event);
     if (filter.batchUuid !== undefined) add('batch_uuid', filter.batchUuid);
-    if (filter.from !== undefined) addRange(clauses, params, dialect, 'created_at', '>=', filter.from);
-    if (filter.to !== undefined) addRange(clauses, params, dialect, 'created_at', '<=', filter.to);
+    if (filter.from !== undefined) {
+      addRange(
+        clauses,
+        params,
+        dialect,
+        'created_at',
+        '>=',
+        timestampValue(filter.from, this.options.dataSource.dialect),
+      );
+    }
+    if (filter.to !== undefined) {
+      addRange(
+        clauses,
+        params,
+        dialect,
+        'created_at',
+        '<=',
+        timestampValue(filter.to, this.options.dataSource.dialect),
+      );
+    }
 
     const order = filter.sort === 'asc' ? 'ASC' : 'DESC';
     const where = clauses.length === 0 ? '' : ` WHERE ${clauses.join(' AND ')}`;
@@ -132,9 +150,9 @@ function addRange(
   dialect: ReturnType<typeof dialectFor>,
   column: string,
   operator: '>=' | '<=',
-  value: Date,
+  value: string,
 ): void {
-  params.push(value.toISOString());
+  params.push(value);
   clauses.push(`${quote(dialect, column)} ${operator} ${dialect.placeholder(params.length)}`);
 }
 

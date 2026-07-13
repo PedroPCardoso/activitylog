@@ -79,6 +79,22 @@ describe('SqlExecutorStore', () => {
     expect(calls[0]?.sql).toContain('INSERT INTO "activity_log"');
   });
 
+  it('formats temporal query bounds as UTC datetime values for MySQL', async () => {
+    const calls: Array<{ sql: string; params: readonly unknown[] | undefined }> = [];
+    const dataSource: SqlDataSource = {
+      dialect: 'mysql',
+      execute: async (sql, params) => {
+        calls.push({ sql, params });
+        return [];
+      },
+    };
+    const store = new SqlExecutorStore({ dataSource });
+
+    await store.query({ from: new Date('2026-07-12T10:20:30.123Z') });
+
+    expect(calls[0]?.params).toEqual(['2026-07-12 10:20:30.123']);
+  });
+
   it('rejects unsupported property and cursor filters explicitly', async () => {
     const sqlite = createSqliteTestDatabase();
     createSqliteActivityLogSchema(sqlite.database);
