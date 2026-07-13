@@ -4,6 +4,7 @@ import type { CauserRef } from '../types/activity.types';
 
 export interface ActivityLogContext {
   causer?: CauserRef | null;
+  causerResolver?: () => CauserRef | null | undefined;
   batchUuid?: string;
   withoutLogging?: boolean;
 }

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createActivityLogger, type ActivityStore, type NewActivity } from 'activitylog-core';
+import {
+  createActivityLogger,
+  mergeLogOptions,
+  type ActivityStore,
+  type NewActivity,
+} from 'activitylog-core';
 
 function createObservingStore(): { store: ActivityStore; persisted: NewActivity[] } {
   const persisted: NewActivity[] = [];
@@ -18,6 +23,21 @@ function createObservingStore(): { store: ActivityStore; persisted: NewActivity[
 }
 
 describe('redaction pipeline', () => {
+  it('composes option levels with higher arrays and field selection winning', () => {
+    const merged = mergeLogOptions(
+      { logExcept: ['password'], redact: ['token'] },
+      { logOnly: ['name'], redact: ['secret'] },
+    );
+
+    expect(merged).toEqual(
+      expect.objectContaining({
+        logOnly: ['name'],
+        redact: ['secret'],
+      }),
+    );
+    expect(merged.logExcept).toBeUndefined();
+  });
+
   it('redacts sensitive property names deeply and case-insensitively', async () => {
     const { persisted, store } = createObservingStore();
     const logger = createActivityLogger({ store });

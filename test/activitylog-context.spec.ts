@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  activityLogContextStorage,
   causerRef,
   createActivityLogger,
   disableLogging,
@@ -42,6 +43,24 @@ describe('activity log context', () => {
       { type: 'User', id: 'u1' },
       null,
     ]);
+  });
+
+  it('resolves a lazy causer at log time', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+    const request: { user?: { id: string } } = {};
+
+    await activityLogContextStorage.run(
+      {
+        causerResolver: () => (request.user ? causerRef('User', request.user.id) : null),
+      },
+      async () => {
+        request.user = { id: 'u1' };
+        await logger.activity().log('lazy');
+      },
+    );
+
+    expect(persisted[0]?.causer).toEqual({ type: 'User', id: 'u1' });
   });
 
   it('propagates context across Promise.all and setTimeout', async () => {

@@ -116,7 +116,9 @@ export class ActivityLogBuilder {
       return;
     }
 
-    const causer = this.state.causer === undefined ? context?.causer ?? null : this.state.causer;
+    const contextCauser =
+      context?.causer !== undefined ? context.causer : context?.causerResolver?.();
+    const causer = this.state.causer === undefined ? contextCauser ?? null : this.state.causer;
     let activity: NewActivity = {
       logName: this.state.logName,
       description,
