@@ -1,9 +1,8 @@
 import type { Activity, NewActivity } from './activity.types';
 import type { ActivityFilter } from './query.types';
+import type { SqlExecutor } from '../sql/datasource.types';
 
-export interface TransactionRef {
-  execute(sql: string, params?: readonly unknown[]): Promise<readonly unknown[]>;
-}
+export interface TransactionRef extends SqlExecutor {}
 
 export interface ActivityStore {
   persist(activities: readonly NewActivity[], ctx?: TransactionRef): Promise<void>;

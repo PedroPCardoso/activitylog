@@ -34,3 +34,16 @@ export type {
 export type { ActivityStore, TransactionRef } from './types/store.types';
 export { CREATED_AT_POLICY, createActivityTimestamp } from './types/time.types';
 export type { ActivityOrderColumn, CreatedAtPolicy, CreatedAtSource, CreatedAtStorage } from './types/time.types';
+export { assertSafeIdentifier } from './sql/validation';
+export { dialectFor } from './sql/sql-dialect';
+export type { SqlDialect } from './sql/sql-dialect';
+export type { SqlDataSource, SqlExecutor, SqlRow, SupportedDialect } from './sql/datasource.types';
+export { ActivityLogException } from './exceptions/activitylog.exception';
+export { InvalidIdentifierException } from './exceptions/invalid-identifier.exception';
+export { InvalidActivityDateException } from './exceptions/invalid-activity-date.exception';
+export { UnsupportedActivityFilterException } from './exceptions/unsupported-filter.exception';
+export { ActivityLogger, ActivityLogBuilder, createActivityLogger } from './logger/activity-logger';
+export type { ActivityLoggerOptions, ActivityTap } from './logger/activity-logger';
+export { SqlExecutorStore } from './store/sql-executor.store';
+export type { SqlExecutorStoreOptions } from './store/sql-executor.store';
+export { ACTIVITY_LOG_MIGRATIONS } from './migrations/activity-log.migrations';
