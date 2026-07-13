@@ -23,5 +23,16 @@ export default defineConfig({
     // External DB specs will share persistent databases; serialize files so
     // future dialect tests cannot truncate each other.
     fileParallelism: false,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['packages/core/src/**/*.ts'],
+      thresholds: {
+        branches: 85,
+        functions: 85,
+        lines: 85,
+        statements: 85,
+      },
+    },
   },
 });

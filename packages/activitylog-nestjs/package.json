@@ -54,10 +54,14 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^10 || ^11",
+    "rxjs": "^7.1.0",
     "typeorm": "^0.3"
   },
   "peerDependenciesMeta": {
     "@nestjs/common": {
+      "optional": true
+    },
+    "rxjs": {
       "optional": true
     },
     "typeorm": {

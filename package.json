@@ -12,6 +12,7 @@
     "build": "npm run build -w activitylog-core && npm run build -w activitylog-nestjs && npm run build -w activitylog-nextjs && node scripts/verify-core-singleton.cjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint \"packages/*/src/**/*.ts\" \"test/**/*.ts\"",
     "release": "changeset publish"
@@ -27,6 +28,7 @@
     "@types/pg": "^8.20.0",
     "@typescript-eslint/eslint-plugin": "^7",
     "@typescript-eslint/parser": "^7",
+    "@vitest/coverage-v8": "^4.1.10",
     "better-sqlite3": "^12.11.1",
     "drizzle-orm": "*",
     "eslint": "^8",

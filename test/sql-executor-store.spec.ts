@@ -94,6 +94,55 @@ describe('SqlExecutorStore', () => {
     expect(calls[0]?.params).toEqual(['2026-07-12 10:20:30.123']);
   });
 
+  it('maps nullable driver rows and clones Date values', async () => {
+    const createdAt = new Date('2026-07-12T10:20:30.123Z');
+    const dataSource: SqlDataSource = {
+      dialect: 'postgres',
+      execute: async () => [
+        {
+          id: 1,
+          log_name: 'default',
+          description: 'system activity',
+          subject_type: null,
+          subject_id: null,
+          causer_type: undefined,
+          causer_id: undefined,
+          event: undefined,
+          properties: null,
+          batch_uuid: undefined,
+          created_at: createdAt,
+        },
+      ],
+    };
+    const store = new SqlExecutorStore({ dataSource });
+
+    const rows = await store.query({});
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        subject: null,
+        causer: null,
+        event: null,
+        properties: {},
+        batchUuid: null,
+        createdAt,
+      }),
+    ]);
+    expect(rows[0]?.createdAt).not.toBe(createdAt);
+  });
+
+  it('normalizes driver-specific affected row counts when pruning', async () => {
+    const dataSource: SqlDataSource = {
+      dialect: 'postgres',
+      execute: async () => [{ rowCount: '2' }],
+    };
+    const store = new SqlExecutorStore({ dataSource });
+
+    await expect(
+      store.prune(new Date('2026-07-12T10:20:30.123Z')),
+    ).resolves.toBe(2);
+  });
+
   it('supports property and cursor filters', async () => {
     const sqlite = createSqliteTestDatabase();
     createSqliteActivityLogSchema(sqlite.database);

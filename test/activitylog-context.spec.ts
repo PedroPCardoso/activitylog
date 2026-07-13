@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  activityLogContextStorage,
   causerRef,
   createActivityLogger,
   disableLogging,
@@ -40,6 +41,49 @@ describe('activity log context', () => {
 
     expect(persisted.map((activity) => activity.causer)).toEqual([
       { type: 'User', id: 'u1' },
+      null,
+    ]);
+  });
+
+  it('resolves a lazy causer at log time', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+    const request: { user?: { id: string } } = {};
+
+    await activityLogContextStorage.run(
+      {
+        causerResolver: () => (request.user ? causerRef('User', request.user.id) : null),
+      },
+      async () => {
+        request.user = { id: 'u1' };
+        await logger.activity().log('lazy');
+      },
+    );
+
+    expect(persisted[0]?.causer).toEqual({ type: 'User', id: 'u1' });
+  });
+
+  it('does not invoke a lazy resolver when the builder has an explicit causer', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+
+    await activityLogContextStorage.run(
+      {
+        causerResolver: () => {
+          throw new Error('resolver must not run');
+        },
+      },
+      async () => {
+        await logger
+          .activity()
+          .causedBy(causerRef('Admin', 'a1'))
+          .log('explicit');
+        await logger.activity().causedByAnonymous().log('anonymous');
+      },
+    );
+
+    expect(persisted.map((activity) => activity.causer)).toEqual([
+      { type: 'Admin', id: 'a1' },
       null,
     ]);
   });
@@ -108,5 +152,12 @@ describe('activity log context', () => {
       expect.objectContaining({ causer: { type: 'User', id: 'u1' }, batchUuid: 'batch-1' }),
       expect.objectContaining({ causer: null, batchUuid: null }),
     ]);
+  });
+
+  it('serializes missing and explicitly anonymous contexts without inventing a causer', () => {
+    expect(serializeContext()).toBeUndefined();
+    expect(
+      runWithContext({ causer: null }, () => serializeContext()),
+    ).toEqual({ causer: null, batchUuid: undefined });
   });
 });
