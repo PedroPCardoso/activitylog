@@ -2,6 +2,7 @@ import { UnsupportedActivityFilterException } from '../exceptions/unsupported-fi
 import { dialectFor } from '../sql/sql-dialect';
 import { assertSafeIdentifier } from '../sql/validation';
 import { mapActivityRow } from './activity-row.mapper';
+import { stringifyCanonicalJson } from './canonical-json';
 import type { Activity, NewActivity } from '../types/activity.types';
 import type { ActivityFilter } from '../types/query.types';
 import type { ActivityStore, TransactionRef } from '../types/store.types';
@@ -169,7 +170,7 @@ function activityValue(
     case 'event':
       return activity.event;
     case 'properties':
-      return JSON.stringify(activity.properties);
+      return stringifyCanonicalJson(activity.properties);
     case 'batch_uuid':
       return activity.batchUuid;
     case 'created_at':

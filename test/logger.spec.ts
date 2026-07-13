@@ -136,5 +136,6 @@ describe('ActivityLogger', () => {
 
     expect(persisted[0]?.batchUuid).toBe('batch-1');
     expect(() => logger.activity().createdAt(new Date('invalid'))).toThrow(InvalidActivityDateException);
+    expect(() => logger.activity().createdAt(new Date('invalid'))).toThrow(/^activitylog:/);
   });
 });

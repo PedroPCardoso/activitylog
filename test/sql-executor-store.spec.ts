@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  InvalidIdentifierException,
   SqlExecutorStore,
   UnsupportedActivityFilterException,
   createActivityLogger,
@@ -27,6 +28,14 @@ function activity(overrides: Partial<NewActivity> = {}): NewActivity {
 }
 
 describe('SqlExecutorStore', () => {
+  it('rejects an unsafe custom table name before executing SQL', () => {
+    const sqlite = createSqliteTestDatabase();
+
+    expect(
+      () => new SqlExecutorStore({ dataSource: sqlite.dataSource, tableName: 'activity_log; DROP TABLE users' }),
+    ).toThrow(InvalidIdentifierException);
+  });
+
   it('persists and reads manual activities from SQLite memory', async () => {
     const sqlite = createSqliteTestDatabase();
     createSqliteActivityLogSchema(sqlite.database);
@@ -96,5 +105,16 @@ describe('SqlExecutorStore', () => {
 
     await expect(store.prune(new Date('2021-01-01T00:00:00.000Z'), 'billing')).resolves.toBe(1);
     await expect(store.query({ sort: 'asc' })).resolves.toHaveLength(2);
+  });
+
+  it('serializes properties with a canonical key order', async () => {
+    const sqlite = createSqliteTestDatabase();
+    createSqliteActivityLogSchema(sqlite.database);
+    const store = new SqlExecutorStore({ dataSource: sqlite.dataSource });
+
+    await store.persist([activity({ properties: { z: 1, a: { d: 2, b: 3 } } })]);
+
+    const rows = sqlite.database.prepare('SELECT properties FROM activity_log').all() as Array<{ properties: string }>;
+    expect(rows[0]?.properties).toBe('{"a":{"b":3,"d":2},"z":1}');
   });
 });
