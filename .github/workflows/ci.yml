@@ -32,6 +32,9 @@ jobs:
       - name: NestJS consumer smoke
         run: docker compose run --rm dev npm run smoke:nestjs
 
+      - name: Prisma consumer smoke
+        run: docker compose run --rm dev npm run smoke:prisma
+
       - name: Stop databases
         if: always()
         run: docker compose down -v

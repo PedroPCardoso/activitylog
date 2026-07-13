@@ -40,6 +40,9 @@ jobs:
       - name: NestJS consumer smoke
         run: npm run smoke:nestjs
 
+      - name: Prisma consumer smoke
+        run: npm run smoke:prisma
+
       - name: Create release PR or publish
         uses: changesets/action@v1
         with:

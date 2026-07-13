@@ -37,15 +37,24 @@ Before merging a version PR:
 npm ci
 npm run build
 npm run smoke:nestjs
+npm run smoke:prisma
 npx changeset status
 ```
 
-After the publish run succeeds, verify the exact public versions and artifact metadata:
+After the core/NestJS publish run for #17 succeeds, verify their exact public versions and
+artifact metadata:
 
 ```sh
 npm view activitylog-core version dist.integrity dist.attestations
 npm view activitylog-nestjs version dist.integrity dist.attestations
 ```
 
-Install both public versions into a clean consumer once more. Do not close the release issue based
-only on a merged version PR; close it after registry reads and the public consumer smoke succeed.
+After the Prisma/NextJS publish run for #19 succeeds, verify its public artifact separately:
+
+```sh
+npm view activitylog-nextjs version dist.integrity dist.attestations
+```
+
+Install the public versions into clean NestJS and Prisma consumers once more. Do not close a
+release issue based only on a merged version PR; close it after registry reads and the matching
+public consumer smoke succeed.
