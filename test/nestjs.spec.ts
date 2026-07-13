@@ -19,6 +19,7 @@ import type {
   LogOptions,
   NewActivity,
 } from 'activitylog-core';
+import { resolveRequestCauser } from 'activitylog-nestjs';
 
 interface ActivityLogServiceLike {
   activity(logName?: string, options?: LogOptions): ActivityLogBuilder;
@@ -112,6 +113,15 @@ async function httpExports(): Promise<
 }
 
 describe('ActivityLogModule', () => {
+  it('resolves null-prototype request users with an id', () => {
+    const user = Object.assign(Object.create(null) as object, { id: 'u2' });
+
+    expect(resolveRequestCauser({ user })).toEqual({
+      type: 'User',
+      id: 'u2',
+    });
+  });
+
   it('resolves default and root log names through an injectable facade', async () => {
     const { ActivityLogModule, ActivityLogService } = await nestExports();
     const defaultObserved = createObservingStore();

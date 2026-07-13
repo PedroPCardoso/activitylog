@@ -1,9 +1,8 @@
 import { Inject, Injectable, type NestMiddleware } from '@nestjs/common';
-import { activityLogContextStorage } from 'activitylog-core';
 
 import { ACTIVITYLOG_ROOT_OPTIONS } from './activity-log.constants';
 import {
-  resolveRequestCauser,
+  runWithRequestContext,
   type ActivityLogRequest,
 } from './activity-log.request';
 import type { ActivityLogModuleOptions } from './activity-log.types';
@@ -20,11 +19,9 @@ export class ActivityLogMiddleware implements NestMiddleware {
     _response: unknown,
     next: (error?: unknown) => void,
   ): void {
-    activityLogContextStorage.run(
-      {
-        causerResolver: () =>
-          resolveRequestCauser(request, this.options.causerResolver),
-      },
+    runWithRequestContext(
+      request,
+      this.options.causerResolver,
       next,
     );
   }

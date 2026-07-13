@@ -63,6 +63,31 @@ describe('activity log context', () => {
     expect(persisted[0]?.causer).toEqual({ type: 'User', id: 'u1' });
   });
 
+  it('does not invoke a lazy resolver when the builder has an explicit causer', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+
+    await activityLogContextStorage.run(
+      {
+        causerResolver: () => {
+          throw new Error('resolver must not run');
+        },
+      },
+      async () => {
+        await logger
+          .activity()
+          .causedBy(causerRef('Admin', 'a1'))
+          .log('explicit');
+        await logger.activity().causedByAnonymous().log('anonymous');
+      },
+    );
+
+    expect(persisted.map((activity) => activity.causer)).toEqual([
+      { type: 'Admin', id: 'a1' },
+      null,
+    ]);
+  });
+
   it('propagates context across Promise.all and setTimeout', async () => {
     const { persisted, store } = createObservingStore();
     const logger = createActivityLogger({ store });

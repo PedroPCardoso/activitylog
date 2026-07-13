@@ -5,12 +5,11 @@ import {
   type ExecutionContext,
   type NestInterceptor,
 } from '@nestjs/common';
-import { activityLogContextStorage } from 'activitylog-core';
 import { Observable } from 'rxjs';
 
 import { ACTIVITYLOG_ROOT_OPTIONS } from './activity-log.constants';
 import {
-  resolveRequestCauser,
+  runWithRequestContext,
   type ActivityLogRequest,
 } from './activity-log.request';
 import type { ActivityLogModuleOptions } from './activity-log.types';
@@ -26,11 +25,9 @@ export class ActivityLogInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<ActivityLogRequest>();
 
     return new Observable((subscriber) =>
-      activityLogContextStorage.run(
-        {
-          causerResolver: () =>
-            resolveRequestCauser(request, this.options.causerResolver),
-        },
+      runWithRequestContext(
+        request,
+        this.options.causerResolver,
         () => next.handle().subscribe(subscriber),
       ),
     );

@@ -1,4 +1,5 @@
 import {
+  activityLogContextStorage,
   causerRef,
   type ActivityId,
   type CauserRef,
@@ -28,11 +29,26 @@ export function resolveRequestCauser(
       ? user.type
       : undefined;
   const constructorType =
-    user.constructor !== Object && user.constructor.name.length > 0
+    typeof user.constructor === 'function' &&
+    user.constructor !== Object &&
+    user.constructor.name.length > 0
       ? user.constructor.name
       : undefined;
 
   return causerRef(explicitType ?? constructorType ?? 'User', user.id);
+}
+
+export function runWithRequestContext<T>(
+  request: ActivityLogRequest,
+  resolver: ActivityLogCauserResolver | undefined,
+  callback: () => T,
+): T {
+  return activityLogContextStorage.run(
+    {
+      causerResolver: () => resolveRequestCauser(request, resolver),
+    },
+    callback,
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
