@@ -44,3 +44,5 @@ export { InvalidActivityDateException } from './exceptions/invalid-activity-date
 export { UnsupportedActivityFilterException } from './exceptions/unsupported-filter.exception';
 export { ActivityLogger, ActivityLogBuilder, createActivityLogger } from './logger/activity-logger';
 export type { ActivityLoggerOptions, ActivityTap } from './logger/activity-logger';
+export { SqlExecutorStore } from './store/sql-executor.store';
+export type { SqlExecutorStoreOptions } from './store/sql-executor.store';
