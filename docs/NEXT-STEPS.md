@@ -40,4 +40,4 @@ Branches menores que não foram cravados nesta sessão — resolver antes das fa
 - **`created_at` / timezone**: decidido em D19.
 - **`dontSubmitEmptyLogs` × iff**: diff vazio dentro de uma tx → simplesmente não emite `persist` (nenhuma linha), confirmado como no-op seguro.
 - **`LogOptions`**: decidido em D20.
-- **Interop nestjs-cls**: escrever a receita concreta (copiar `user` da CLS para o causer no middleware).
+- **Interop nestjs-cls**: decidido e documentado em [`NESTJS_CLS.md`](./NESTJS_CLS.md); nestjs-cls permanece a fonte de identidade e o resolver lazy evita cópia eager.
