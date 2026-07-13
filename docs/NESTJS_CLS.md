@@ -123,12 +123,15 @@ logs a null/system causer.
 
 ## Prototype verdict
 
-The throwaway prototype for issue `#6` nested one `ClsService.run()` with one
-`ActivityLogMiddleware` entry. It observed:
+The throwaway prototype for issue `#6` first exercised the two stores directly,
+then mounted `ClsModule.forRoot()` and `ActivityLogModule.forRoot()` in a real
+Nest application with an authentication guard, controller and HTTP request. It
+observed:
 
 - exactly one context entry per library;
 - both contexts active inside the request and inactive afterward;
-- two Activities resolving `u1` and then `u2` after the CLS user changed;
+- direct nesting resolving `u1` and then `u2` after the CLS user changed;
+- the real Nest request resolving the guard's `u-http` identity;
 - no activitylog or nestjs-cls runtime dependency added to the other package.
 
 References:
