@@ -1,4 +1,13 @@
 export * from 'activitylog-core';
 
-export const ACTIVITYLOG_ROOT_OPTIONS = Symbol('ACTIVITYLOG_ROOT_OPTIONS');
-export const ACTIVITYLOG_FEATURE_OPTIONS = Symbol('ACTIVITYLOG_FEATURE_OPTIONS');
+export {
+  ACTIVITYLOG_FEATURE_OPTIONS,
+  ACTIVITYLOG_ROOT_OPTIONS,
+} from './activity-log.constants';
+export { ActivityLogModule } from './activity-log.module';
+export { ActivityLogService } from './activity-log.service';
+export type {
+  ActivityLogCallOptions,
+  ActivityLogFeatureOptions,
+  ActivityLogModuleOptions,
+} from './activity-log.types';
