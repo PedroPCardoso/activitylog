@@ -42,3 +42,5 @@ export { ActivityLogException } from './exceptions/activitylog.exception';
 export { InvalidIdentifierException } from './exceptions/invalid-identifier.exception';
 export { InvalidActivityDateException } from './exceptions/invalid-activity-date.exception';
 export { UnsupportedActivityFilterException } from './exceptions/unsupported-filter.exception';
+export { ActivityLogger, ActivityLogBuilder, createActivityLogger } from './logger/activity-logger';
+export type { ActivityLoggerOptions, ActivityTap } from './logger/activity-logger';
