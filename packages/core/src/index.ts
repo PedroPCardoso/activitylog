@@ -3,6 +3,15 @@ export {
   getActivityLogContext,
   type ActivityLogContext,
 } from './context/activitylog-context';
+export {
+  disableLogging,
+  enableLogging,
+  runWithContext,
+  serializeContext,
+  withBatch,
+  withoutLogging,
+} from './context/activitylog-context.helpers';
+export type { SerializedActivityLogContext } from './context/activitylog-context.helpers';
 export { causerRef, subjectRef } from './types/activity.types';
 export type {
   Activity,

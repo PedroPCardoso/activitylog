@@ -1,0 +1,112 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  causerRef,
+  createActivityLogger,
+  disableLogging,
+  enableLogging,
+  runWithContext,
+  serializeContext,
+  withBatch,
+  withoutLogging,
+  type ActivityStore,
+  type NewActivity,
+} from 'activitylog-core';
+
+function createObservingStore(): { store: ActivityStore; persisted: NewActivity[] } {
+  const persisted: NewActivity[] = [];
+
+  return {
+    persisted,
+    store: {
+      persist: async (activities) => {
+        persisted.push(...activities);
+      },
+      query: async () => [],
+      prune: async () => 0,
+    },
+  };
+}
+
+describe('activity log context', () => {
+  it('resolves a causer from context only when the builder omits causedBy', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+
+    await runWithContext({ causer: causerRef('User', 'u1') }, async () => {
+      await logger.activity().log('context causer');
+      await logger.activity().causedByAnonymous().log('anonymous');
+    });
+
+    expect(persisted.map((activity) => activity.causer)).toEqual([
+      { type: 'User', id: 'u1' },
+      null,
+    ]);
+  });
+
+  it('propagates context across Promise.all and setTimeout', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+
+    await runWithContext({ causer: causerRef('User', 'u1') }, async () => {
+      await Promise.all([
+        logger.activity().log('parallel'),
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            void logger.activity().log('timer').then(resolve);
+          }, 0);
+        }),
+      ]);
+    });
+
+    expect(persisted.map((activity) => activity.causer)).toEqual([
+      { type: 'User', id: 'u1' },
+      { type: 'User', id: 'u1' },
+    ]);
+  });
+
+  it('shares nested batches and restores the outer scope afterward', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+
+    await withBatch(async () => {
+      await logger.activity().log('outer');
+      await withBatch(async () => logger.activity().log('inner'));
+    });
+    await logger.activity().log('outside');
+
+    expect(persisted[0]?.batchUuid).toMatch(/^[0-9a-f-]{36}$/);
+    expect(persisted[1]?.batchUuid).toBe(persisted[0]?.batchUuid);
+    expect(persisted[2]?.batchUuid).toBeNull();
+  });
+
+  it('suppresses logging locally and through the global switch', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+
+    await withoutLogging(() => logger.activity().log('suppressed'));
+    disableLogging();
+    await logger.activity().log('globally suppressed');
+    enableLogging();
+    await logger.activity().log('enabled');
+
+    expect(persisted).toEqual([expect.objectContaining({ description: 'enabled' })]);
+  });
+
+  it('serializes causer and batch across a simulated job boundary', async () => {
+    const { persisted, store } = createObservingStore();
+    const logger = createActivityLogger({ store });
+    const serialized = await runWithContext(
+      { causer: causerRef('User', 'u1'), batchUuid: 'batch-1' },
+      () => serializeContext(),
+    );
+
+    await runWithContext(serialized, () => logger.activity().log('job'));
+    await logger.activity().log('system');
+
+    expect(persisted).toEqual([
+      expect.objectContaining({ causer: { type: 'User', id: 'u1' }, batchUuid: 'batch-1' }),
+      expect.objectContaining({ causer: null, batchUuid: null }),
+    ]);
+  });
+});

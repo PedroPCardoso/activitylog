@@ -70,6 +70,14 @@ passwords, tokens, secrets, authorization data and email addresses; pass a repla
 Pass an executor bound to an existing ORM transaction as the second `persist` argument when
 writing directly to a store. The core never commits or rolls back a transaction itself.
 
+## Context and batches
+
+Use `runWithContext` around a request or job to supply a causer. It flows through promises and
+timers, and the logger uses it only when `.causedBy()` was omitted. `withBatch` assigns one UUID
+to a unit of work and nested calls reuse that UUID. For a queue boundary, pass
+`serializeContext()` with the job payload and restore it with `runWithContext()` in the worker.
+`withoutLogging`, `disableLogging`, and `enableLogging` provide explicit suppression controls.
+
 ## Schema
 
 `ACTIVITY_LOG_MIGRATIONS` exports reference SQL for `sqlite`, `postgres`, and `mysql`. The
