@@ -128,4 +128,11 @@ describe('activity log context', () => {
       expect.objectContaining({ causer: null, batchUuid: null }),
     ]);
   });
+
+  it('serializes missing and explicitly anonymous contexts without inventing a causer', () => {
+    expect(serializeContext()).toBeUndefined();
+    expect(
+      runWithContext({ causer: null }, () => serializeContext()),
+    ).toEqual({ causer: null, batchUuid: undefined });
+  });
 });
