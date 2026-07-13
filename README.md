@@ -62,6 +62,11 @@ await logger
 `.createdAt(date)` to supply the logical event time. `.on()`/`.by()` are aliases for
 `.performedOn()`/`.causedBy()`, and `.byAnonymous()` removes an explicit causer.
 
+`logOptions` redact nested sensitive property names before persistence. The default list includes
+passwords, tokens, secrets, authorization data and email addresses; pass a replacement list or
+`redact: false` only when that policy is explicitly appropriate for the application. A
+`beforePersist` hook can enrich an activity, but its output is redacted as well.
+
 Pass an executor bound to an existing ORM transaction as the second `persist` argument when
 writing directly to a store. The core never commits or rolls back a transaction itself.
 

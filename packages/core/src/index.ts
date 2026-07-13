@@ -15,6 +15,8 @@ export type {
   SubjectRef,
 } from './types/activity.types';
 export { DEFAULT_REDACT_FIELDS } from './types/log-options.types';
+export { resolveLogOptions } from './options/resolve-log-options';
+export { redactActivity } from './redaction/redact-activity';
 export type {
   BeforePersistContext,
   DescriptionContext,
