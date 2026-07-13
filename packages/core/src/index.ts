@@ -58,3 +58,4 @@ export type { ActivityLoggerOptions, ActivityTap } from './logger/activity-logge
 export { SqlExecutorStore } from './store/sql-executor.store';
 export type { SqlExecutorStoreOptions } from './store/sql-executor.store';
 export { ACTIVITY_LOG_MIGRATIONS } from './migrations/activity-log.migrations';
+export { activityQuery } from './query/activity-query';

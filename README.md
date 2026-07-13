@@ -78,6 +78,13 @@ to a unit of work and nested calls reuse that UUID. For a queue boundary, pass
 `serializeContext()` with the job payload and restore it with `runWithContext()` in the worker.
 `withoutLogging`, `disableLogging`, and `enableLogging` provide explicit suppression controls.
 
+## Querying activities
+
+`activityQuery(store)` provides immutable typed scopes for log, subject, causer, event, batch,
+time range and JSON property filters. `paginate(limit, cursor)` uses the stable
+`createdAt,id` cursor and returns `items` plus a nullable `nextCursor`. Call
+`.withAggregates(false)` when histories should exclude aggregate bulk-operation activities.
+
 ## Schema
 
 `ACTIVITY_LOG_MIGRATIONS` exports reference SQL for `sqlite`, `postgres`, and `mysql`. The

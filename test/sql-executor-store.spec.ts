@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   InvalidIdentifierException,
   SqlExecutorStore,
-  UnsupportedActivityFilterException,
   createActivityLogger,
   subjectRef,
   type NewActivity,
@@ -95,17 +94,22 @@ describe('SqlExecutorStore', () => {
     expect(calls[0]?.params).toEqual(['2026-07-12 10:20:30.123']);
   });
 
-  it('rejects unsupported property and cursor filters explicitly', async () => {
+  it('supports property and cursor filters', async () => {
     const sqlite = createSqliteTestDatabase();
     createSqliteActivityLogSchema(sqlite.database);
     const store = new SqlExecutorStore({ dataSource: sqlite.dataSource });
 
-    await expect(store.query({ properties: [{ path: 'plan', operator: '=', value: 'pro' }] })).rejects.toThrow(
-      UnsupportedActivityFilterException,
-    );
+    await store.persist([
+      activity({ properties: { plan: 'pro' }, createdAt: new Date('2026-07-12T00:00:00.000Z') }),
+      activity({ properties: { plan: 'other' }, createdAt: new Date('2026-07-12T00:00:01.000Z') }),
+    ]);
+
+    await expect(store.query({ properties: [{ path: 'plan', operator: '=', value: 'pro' }] })).resolves.toEqual([
+      expect.objectContaining({ properties: { plan: 'pro' } }),
+    ]);
     await expect(
-      store.query({ cursor: { createdAt: new Date('2026-07-12T00:00:00.000Z'), id: 1 } }),
-    ).rejects.toThrow(/^activitylog:/);
+      store.query({ cursor: { createdAt: new Date('2026-07-12T00:00:01.000Z'), id: 2 } }),
+    ).resolves.toHaveLength(1);
   });
 
   it('prunes by timestamp and optional log name', async () => {
