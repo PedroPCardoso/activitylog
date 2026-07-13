@@ -4,9 +4,8 @@ ORM-agnostic entity audit trail for TypeScript, with the DX of
 [spatie/laravel-activitylog](https://github.com/spatie/laravel-activitylog). The core knows
 nothing about any ORM or about NestJS; adapters are first-class.
 
-> **Status:** early development. The core now supports manual logging through a SQL executor;
-> framework adapters, automatic diffs, context causer resolution and the fluent query API are
-> still being delivered in later tickets.
+> **Status:** early development. The core supports manual logging, request/job context and the
+> fluent query API. The NestJS module is available; ORM adapters are still being delivered.
 
 ## The bet
 
@@ -77,6 +76,53 @@ timers, and the logger uses it only when `.causedBy()` was omitted. `withBatch` 
 to a unit of work and nested calls reuse that UUID. For a queue boundary, pass
 `serializeContext()` with the job payload and restore it with `runWithContext()` in the worker.
 `withoutLogging`, `disableLogging`, and `enableLogging` provide explicit suppression controls.
+
+## NestJS
+
+`activitylog-nestjs` exposes a global module and an injectable façade. `forRoot()` applies the
+request middleware once; the middleware opens AsyncLocalStorage before guards run, while the
+logger resolves `request.user` lazily after a guard has had a chance to populate it.
+
+```ts
+import { Injectable, Module } from '@nestjs/common';
+import { ActivityLogModule, ActivityLogService } from 'activitylog-nestjs';
+
+@Module({
+  imports: [ActivityLogModule.forRoot({ store })],
+})
+export class AppModule {}
+
+@Injectable()
+export class OrdersService {
+  constructor(private readonly activityLog: ActivityLogService) {}
+
+  async record(): Promise<void> {
+    await this.activityLog
+      .activity('orders')
+      .event('updated')
+      .log('Order updated');
+  }
+}
+```
+
+A plain `request.user` with an `id` becomes a `User` causer. Set `type` on the user object,
+return a class instance, or pass `causerResolver` to `forRoot()` when the application uses a
+different identity shape:
+
+```ts
+ActivityLogModule.forRoot({
+  store,
+  causerResolver: (request) =>
+    request.user
+      ? { type: 'Account', id: request.user.accountId }
+      : null,
+});
+```
+
+Feature modules can set local defaults with `ActivityLogModule.forFeature(options)`. A call can
+override them through `activity(logName, options)`; the precedence is call > feature > root >
+default. `ActivityLogInterceptor` is exported as a secondary integration for applications that
+cannot use middleware. Use either HTTP integration as the context boundary.
 
 ## Querying activities
 
