@@ -1,6 +1,6 @@
 {
   "name": "activitylog-nestjs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "NestJS activity log module with TypeORM adapter support.",
   "keywords": [
     "nestjs",
@@ -50,7 +50,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "activitylog-core": "^0.0.0 || ^0.1.0"
+    "activitylog-core": "^0.1.0"
   },
   "peerDependencies": {
     "@nestjs/common": "^10 || ^11",
