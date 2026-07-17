@@ -1,7 +1,6 @@
 {
   "name": "activitylog-nextjs",
   "version": "0.0.0",
-  "private": true,
   "description": "Activity log adapters for Next.js / any Node runtime, over Prisma or Drizzle.",
   "keywords": [
     "nextjs",
